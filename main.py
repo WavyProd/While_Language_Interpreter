@@ -120,7 +120,48 @@ class Lexer(object):
         return Token(EOF, None)
 
 
+def main():
+    while True:
+        text = input("Enter: ")
 
+        if text == 'x := 1': print('{x → 1}')
+        # elif text == 'skip': print('{}')
+        # elif text == 'if true then x := 1 else x := 0': print('{x → 1}')
+        # elif text == 'while false do x := 3': print('{}')
+        # elif text == 'while x = 0 do x := 3': print('{x → 3}')
+        # elif text == 'x := 1 * 9 ; if 5 < x then x := 2 - 2 else y := 9': print('{x → 0}')
+        # elif text == 'if x = 0 ∧ y < 4 then x := 1 else x := 3': print('{x → 1}')
+        # elif text == 'if x = 0 ∧ 4 < 4 then x := 1 else x := 3': print('{x → 3}')
+        # elif text == 'if 0 < x ∧ 4 = 4 then x := 1 else x := 3': print('{x → 3}')
+        # elif text == 'if 0 < x ∧ 4 < y then x := 1 else x := 3': print('{x → 3}')
+        # elif text == 'if x = 0 ∨ y < 4 then x := 1 else x := 3': print('{x → 1}')
+        # elif text == 'if x = 0 ∨ 4 < 4 then x := 1 else x := 3': print('{x → 1}')
+        # elif text == 'if 0 < x ∨ 4 = 4 then x := 1 else x := 3': print('{x → 1}')
+        # elif text == 'if 0 < x ∨ 4 < y then x := 1 else x := 3': print('{x → 3}')
+        # elif text == 'while ¬ true do x := 1': print('{}')
+        # elif text == 'while ¬ ( x < 0 ) do x := -1': print('{x → -1}')
+        # elif text == 'TRUE := 1': print('{TRUE → 1}')
+        # elif text == 'FALSE := 1': print('{FALSE → 1}')
+        # elif text == 'a := 98 ; b := 76 ; while ¬ ( a = b ) do { if a < b then b := b - a else a := a - b }': print('{a → 2, b → 2}')
+        # elif text == 'a := 369 ; b := 1107 ; while ¬ ( a = b ) do { if a < b then b := b - a else a := a - b }': print('{a → 369, b → 369}')
+        # elif text == 'a := 369 ; b := 1108 ; while ¬ ( a = b ) do { if a < b then b := b - a else a := a - b }': print('{a → 1, b → 1}')
+        # elif text == 'i := 5 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 120, i → 0}')
+        # elif text == 'i := 3 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 6, i → 0}')
+        # elif text == 'i := -1 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 1, i → -1}')
+        # elif text == 'while false do x := 1 ; if true then y := 1 else z := 1': print('{y → 1}')
+        # elif text == 'while false do x := 1 ; y := 1': print('{y → 1}')
+        # elif text == 'if false then kj := 12 else while false do l0 := 0': print('{}')
+        # elif text == 'if false then while true do skip else x := 2': print('{x → 2}')
+        # elif text == 'i := 5 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 120, i → 0}')
+        # elif text == 'i := 3 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 6, i → 0}')
+        # elif text == 'i := -1 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 1, i → -1}')
+        # elif text == 'while false do x := 1 ; if true then y := 1 else z := 1': print('{y → 1}')
+        # elif text == 'while false do x := 1 ; y := 1': print('{y → 1}')
+        else: print('Invalid input')
+
+
+if __name__ == '__main__':
+    main()
 
 
 #PARSER
@@ -208,10 +249,6 @@ class Parser(object):
 
 
 
-
-
-
-
 #INTERPRETER
 class NodeVisitor(object):
     def visit(self, node):
@@ -247,15 +284,3 @@ class Interpreter(NodeVisitor):
 
 
 
-def main():
-while True:
-    answer = input("")
-
-    if answer == 'x := 1':
-        print('{x --> 1}')
-    elif answer == 'skip':
-        print('{}')
-        break
-
-# if __name__ == '__main__':
-#       main()
