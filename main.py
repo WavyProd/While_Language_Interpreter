@@ -197,6 +197,7 @@ class Parser(object):
                 self.eat(PLUS)
             elif token.type == MINUS:
                 self.eat(MINUS)
+            
 
             node = BinOp(left=node, op=token, right=self.term())
 
