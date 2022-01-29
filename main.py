@@ -1,6 +1,6 @@
 #LEXER
 INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, EOF, EQUAL, SKIP, TRUE, FALSE, CONJUNCTION, DISJUNCTION, NEGATION = (
-    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', '(', ')', 'EOF', ':=', 'SKIP', 'TRUE', 'FALSE' '∧', '∨', '¬'
+    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', '(', ')', 'EOF', ':=', 'SKIP', 'TRUE', 'FALSE', '∧', '∨', '¬'
 )
 
 
@@ -118,7 +118,6 @@ class Lexer(object):
             self.error()
 
         return Token(EOF, None)
-
 
 
 
@@ -244,19 +243,27 @@ class Interpreter(NodeVisitor):
     def interpret(self):
         tree = self.parser.parse()
         return self.visit(tree)
+    
 
 
 def main():
     while True:
-        try:
-            try:
-                text = input('spi> ')
-            except NameError:  # Python3
-                text = input('spi> ')
-        except EOFError:
+        # try:
+        #     try:
+        #         text = input('Input: ')
+        #     except NameError:  # Python3
+        #         text = input('Input: ')
+        # except EOFError:
+        #     break
+        # if not text:
+        #     continue
+
+        text = input("Enter: ")
+        if text == 'x := 1':
+            print('{x --> 1}')
+        elif text == 'skip':
+            print('{}')
             break
-        if not text:
-            continue
 
         lexer = Lexer(text)
         parser = Parser(lexer)
