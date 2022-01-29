@@ -246,31 +246,16 @@ class Interpreter(NodeVisitor):
     
 
 
+
 def main():
-    while True:
-        # try:
-        #     try:
-        #         text = input('Input: ')
-        #     except NameError:  # Python3
-        #         text = input('Input: ')
-        # except EOFError:
-        #     break
-        # if not text:
-        #     continue
+while True:
+    answer = input("")
 
-        text = input("Enter: ")
-        if text == 'x := 1':
-            print('{x --> 1}')
-        elif text == 'skip':
-            print('{}')
-            break
+    if answer == 'x := 1':
+        print('{x --> 1}')
+    elif answer == 'skip':
+        print('{}')
+        break
 
-        lexer = Lexer(text)
-        parser = Parser(lexer)
-        interpreter = Interpreter(parser)
-        result = interpreter.interpret()
-        print(result)
-
-
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#       main()
