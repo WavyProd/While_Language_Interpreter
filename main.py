@@ -4,6 +4,7 @@ INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, EOF, EQUAL, SKIP, TRUE, FALSE, C
 )
 
 
+
 class Token(object):
     def __init__(self, type, value):
         self.type = type
