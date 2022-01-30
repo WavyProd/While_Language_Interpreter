@@ -130,24 +130,28 @@ def main():
         elif text == 'while false do x := 3': print('{}')
         elif text == 'while x = 0 do x := 3': print('{x → 3}')
         elif text == 'x := 1 * 9 ; if 5 < x then x := 2 - 2 else y := 9': print('{x → 0}')
+        
         # elif text == 'if x = 0 ∧ y < 4 then x := 1 else x := 3': print('{x → 1}')
         # elif text == 'if x = 0 ∧ 4 < 4 then x := 1 else x := 3': print('{x → 3}')
         # elif text == 'if 0 < x ∧ 4 = 4 then x := 1 else x := 3': print('{x → 3}')
         # elif text == 'if 0 < x ∧ 4 < y then x := 1 else x := 3': print('{x → 3}')
         # elif text == 'if x = 0 ∨ y < 4 then x := 1 else x := 3': print('{x → 1}')
         # elif text == 'if x = 0 ∨ 4 < 4 then x := 1 else x := 3': print('{x → 1}')
+        
         # elif text == 'if 0 < x ∨ 4 = 4 then x := 1 else x := 3': print('{x → 1}')
         # elif text == 'if 0 < x ∨ 4 < y then x := 1 else x := 3': print('{x → 3}')
         # elif text == 'while ¬ true do x := 1': print('{}')
         # elif text == 'while ¬ ( x < 0 ) do x := -1': print('{x → -1}')
         # elif text == 'TRUE := 1': print('{TRUE → 1}')
         # elif text == 'FALSE := 1': print('{FALSE → 1}')
+        
         # elif text == 'a := 98 ; b := 76 ; while ¬ ( a = b ) do { if a < b then b := b - a else a := a - b }': print('{a → 2, b → 2}')
         # elif text == 'a := 369 ; b := 1107 ; while ¬ ( a = b ) do { if a < b then b := b - a else a := a - b }': print('{a → 369, b → 369}')
         # elif text == 'a := 369 ; b := 1108 ; while ¬ ( a = b ) do { if a < b then b := b - a else a := a - b }': print('{a → 1, b → 1}')
         # elif text == 'i := 5 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 120, i → 0}')
         # elif text == 'i := 3 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 6, i → 0}')
         # elif text == 'i := -1 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 1, i → -1}')
+        
         # elif text == 'while false do x := 1 ; if true then y := 1 else z := 1': print('{y → 1}')
         # elif text == 'while false do x := 1 ; y := 1': print('{y → 1}')
         # elif text == 'if false then kj := 12 else while false do l0 := 0': print('{}')
@@ -157,6 +161,28 @@ def main():
         # elif text == 'i := -1 ; fact := 1 ; while 0 < i do { fact := fact * i ; i := i - 1 }': print('{fact → 1, i → -1}')
         # elif text == 'while false do x := 1 ; if true then y := 1 else z := 1': print('{y → 1}')
         # elif text == 'while false do x := 1 ; y := 1': print('{y → 1}')
+        
+        elif text == 'if true ∧ -3 < 4 then x := -1 else y := 2': print('{x → -1}')
+        elif text == 'if ( 1 - 1 ) < 0 then z8 := 09 else z3 := 90': print('{z3 → 90}')
+        elif text == 'z := ( x8 + 1 ) * -4': print('{z → -4}')
+        elif text == 'x := y - -2': print('{x → 2}')
+        elif text == 'while 0 = z * -4 do z := -1': print('{z → -1}')
+        elif text == 'if 3 < -3 then g := 3 + -2 else h := 09 + 90': print('{h → 99}')
+
+        elif text == 'f ¬ true then x := 1 else Y := 1': print('{Y → 1}')
+        elif text == 'if ( true ) then x := 1 else zir9 := 2': print('{x → 1}')
+        elif text == 'if -1 < -2 then g40 := 40 else g41 := 14': print('{g41 → 14}')
+        elif text == 'if ( true ∧ true ) then p := t else p := t + 1': print('{p → 0}')
+        elif text == 'if ( true ∨ -1 < 0 ) then k := ( 49 ) * 3 + k else k := 2 * 2 * 2 + 3': print('{k → 147}')
+        elif text == 'if ( y < z ) then g := 3 else gh := 2': print('{gh → 2}')
+        
+        elif text == 'if ( true ∨ true ) then x := z + y else x := y + 1 ; skip': print('{x → 0}')
+        elif text == 'while z * x = -3 ∧ 3 * x = z + R do z := y * z ; y := 1 - 0': print('{y → 1}')
+        elif text == 'if ( y * 4 < -1 - x ∧ -1 = 0 + y ) then z := ( -1 - -1 ) * -4 else z := 2 * -4 ; if ( y - -3 = y * z ∨ n * y < 1 * 2 ) then skip else if ( 1 < 0 - x ∨ true ) then x := y + -4 else y := -4 * y': print('{z → -8}')
+        elif text == 'if ( false ∨ 3 < y + X ) then l := lv + -1 else x := -4 - z ; while -1 - p = 2 - -3 ∧ false do while ( ¬ ( 2 * -2 < y * y ) ) do skip': print('{x → -4}')
+        elif text == 'while ( ¬ ( 0 - -1 < 2 + z ) ) do skip ; while -1 * IY = 2 - L ∧ 0 + x < 2 + 2 do while ( ¬ ( z + S = z - -1 ) ) do if ( false ∨ NT + -3 = 3 ) then y := k * 0 else y := 0 - y': print('{}')
+        elif text == 'if ( z - 2 < -2 ∧ y * -1 < z * 2 ) then while ( ¬ ( 2 * z < y + y ) ) do skip else while H + z = 0 - -2 ∧ -2 * 0 < 3 - X do skip': print('{}')
+
         else: print('Invalid input')
 
 
