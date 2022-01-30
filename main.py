@@ -1,4 +1,84 @@
-#LEXER
+import ast
+import builtins
+
+class EntryNodeVisitor(ast.NodeVisitor):
+
+    def generic_visit(self, node):
+        n = node.__class__.__name__
+        raise NotImplementedError("Visitor for node {} not implemented".format(n))
+
+
+class Expression:
+
+    def __init__(self, node):
+        self.d = {}
+        self.parent = None
+        # Cross-link namespace to AST node. Note that we can't do the
+        # opposite, because for one node, there can be different namespaces.
+        self.node = node
+
+    def __getitem__(self, k):
+        return self.d[k]
+
+    def get(self, k, default=None):
+        return self.d.get(k, default)
+
+    def __setitem__(self, k, v):
+        self.d[k] = v
+
+    def __delitem__(self, k):
+        del self.d[k]
+
+    def __contains__(self, k):
+        return k in self.d
+
+    def __str__(self):
+        return "<{} {}>".format(self.__class__.__name__, self.d)
+
+
+class ModuleWhile(Expression):
+    pass
+class FunctionWhile(Expression):
+    pass
+class ClassWhile(Expression):
+    pass
+
+class InputStreamer:
+
+    def __getitem__(self, idx):
+        return idx
+
+input_streamer = InputStreamer()
+
+
+
+
+class TargetNonlocalFlow(Exception):
+    """Base exception class to simulate non-local control flow transfers in
+    a target application."""
+    pass
+
+class OutputValueBreak(TargetNonlocalFlow):
+    pass
+
+class OutputValueContinue(TargetNonlocalFlow):
+    pass
+
+class OutputValueReturn(TargetNonlocalFlow):
+    pass
+
+
+class VariableScope:
+
+    def __init__(self, name):
+        self.name = name
+
+NO_VAR = VariableScope("no_var")
+GLOBAL = VariableScope("global")
+NONLOCAL = VariableScope("nonlocal")
+
+
+
 INTEGER, PLUS, MINUS, MUL, DIV, LPAREN, RPAREN, EOF, EQUAL, SKIP, TRUE, FALSE, CONJUNCTION, DISJUNCTION, NEGATION = (
     'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', '(', ')', 'EOF', ':=', 'SKIP', 'TRUE', 'FALSE', '∧', '∨', '¬'
 )
@@ -120,6 +200,34 @@ class Lexer(object):
 
         return Token(EOF, None)
 
+class InterpreterFuncWrap:
+    "Callable wrapper for AST functions (FunctionDef nodes)."
+
+    def __init__(self, node, interp):
+        self.node = node
+        self.interp = interp
+        self.lexical_scope = interp.ns
+
+    def __call__(self, *args, **kwargs):
+        return self.interp.call_func(self.node, self, *args, **kwargs)
+
+
+# Python don't fully treat objects, even those defining __call__() special
+# method, as a true callable. For example, such objects aren't automatically
+# converted to bound methods if looked up as another object's attributes.
+# As we want our "interpreted functions" to behave as close as possible to
+# real functions, we just wrap function object with a real function. An
+# alternative might have been to perform needed checks and explicitly
+# bind a method using types.MethodType() in visit_Attribute (but then maybe
+# there would be still other cases of "callable object" vs "function"
+# discrepancies).
+def InterpreterFunc(fun):
+
+    def func(*args, **kwargs):
+        return fun.__call__(*args, **kwargs)
+
+    return func
+
 
 def main():
     while True:
@@ -189,6 +297,35 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+class InterpreterWith:
+
+    def __init__(self, ctx):
+        self.ctx = ctx
+
+    def __enter__(self):
+        return self.ctx.__enter__()
+
+    def __exit__(self, tp, exc, tb):
+        # Don't leak meta-level exceptions into target
+        if isinstance(exc, TargetNonlocalFlow):
+            tp = exc = tb = None
+        return self.ctx.__exit__(tp, exc, tb)
+
+
+class InterpreterModule:
+
+    def __init__(self, ns):
+        self.ns = ns
+
+    def __getattr__(self, name):
+        try:
+            return self.ns[name]
+        except KeyError:
+            raise AttributeError
+
+    def __dir__(self):
+        return list(self.ns.d.keys())
 
 
 #PARSER
