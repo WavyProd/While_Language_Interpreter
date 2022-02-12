@@ -321,7 +321,7 @@ class Parser(object):
 
 def main():
     while True:
-        text = input("Enter: ")
+        text = input("")
 
         if text == 'x := 1': print('{x → 1}')
         elif text == 'skip': print('{}')
