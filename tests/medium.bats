@@ -59,3 +59,4 @@ load harness
 @test "medium-15" {
   check 'while false do x := 1 ; y := 1' '{y → 1}'
 }
+
