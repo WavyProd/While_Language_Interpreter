@@ -1,5 +1,2 @@
-run:
-	pyinstaller --onefile while.py
-	cp ./dist/while .
-	rm -r dist build
-	rm while.spec
+while: while.py
+      python while.py
