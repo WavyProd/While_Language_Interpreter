@@ -1,163 +1,571 @@
-import sys
-from lark import Lark
-from collections import OrderedDict
+import copy
 
-class InterpAST():
-    def __init__(self, parser):
-        self.parser = parser
+class Token:
+
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
+
+    def __str__(self):
+        return 'Token({type}, {value})'.format(type=self.type, value=repr(self.value))
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class Tokenizer:
+
+    def __init__(self, user_input):
         self.state = {}
+        self.user_input = user_input
+        self.pos = 0
+        self.current_char = self.user_input[self.pos]
 
-    def checkVariable(self, var):
-        if var in self.state:
-            return self.state[var]
-        return 0
-        
-    def booleanCHECK(self, oper, L, R):
-        if oper == "<":
-            return L < R
-        
-        elif oper == "=":
-            return L == R
-        
-        elif oper == ">":
-            return L > R
-    
+    def syntax_error(self):
+        raise Exception('You have an invalid character . . ')
 
-    def interpret(self, tree):
-        stmt_oper = tree.data
+    def advance(self):
+        self.pos += 1
+        if self.pos > len(self.user_input) - 1:
+            self.current_char = None
+        else:
+            self.current_char = self.user_input[self.pos]
 
-        # NOT
-        if stmt_oper == "not":
-            if not self.interpret(tree.children[0]):
-                return 1
-            
+    def assignment(self):
+        result = ''
+        while self.current_char is not None and self.current_char in (':', '='):
+            result = result + self.current_char
+            self.advance()
+        if result == ':=':
+            return 'ASSIGN'
+        else:
+            self.syntax_error()
+
+    def integer(self):
+        result = ''
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+        return int(result)
+
+    def array(self):
+        result = ''
+        self.advance()
+        while self.current_char is not None and self.current_char != ']':
+            result += self.current_char
+            self.advance()
+        self.advance()
+        result = [int(i) for i in result.split(',')]
+        return result
+
+    def get_next_token(self):
+        while self.current_char is not None:
+
+            if self.current_char.isspace():
+                self.advance()
+
+            if self.current_char.isdigit():
+                return Token('INTEGER', self.integer())
+
+            if self.current_char == '+':
+                self.advance()
+                return Token('PLUS', '+')
+
+            if self.current_char == '-':
+                self.advance()
+                return Token('MINUS', '-')
+
+            if self.current_char == '*':
+                self.advance()
+                return Token('MUL', '*')
+
+            if self.current_char == '/':
+                self.advance()
+                return Token('DIV', '/')
+
+            if self.current_char == '(':
+                self.advance()
+                return Token('LEFT_PARENTHESIS', '(')
+
+            if self.current_char == ')':
+                self.advance()
+                return Token('RIGHT_PARENTHESIS', ')')
+
+            if self.current_char == '{':
+                self.advance()
+                return Token('LEFT_BRACES', '{')
+
+            if self.current_char == '}':
+                self.advance()
+                return Token('RIGHT_BRACES', '}')
+
+            if self.current_char == '=':
+                self.advance()
+                return Token('EQUALS', '=')
+
+            if self.current_char == '<':
+                self.advance()
+                return Token('SMALLER', '<')
+
+            if self.current_char == ';':
+                self.advance()
+                return Token('SEMI', ';')
+
+            if self.current_char == '¬':
+                self.advance()
+                return Token('NOT', '¬')
+
+            if self.current_char == '∧':
+                self.advance()
+                return Token('AND', '∧')
+
+            if self.current_char == '∨':
+                self.advance()
+                return Token('OR', '∨')
+
+            if self.current_char == ':':
+                return Token('ASSIGN', self.assignment())
+
+            if self.current_char == '[':
+                return Token('ARRAY', self.array())
+
+            if self.current_char.isalpha():
+                result = ''
+
+                while self.current_char is not None and (self.current_char.isalpha() or self.current_char.isdigit()):
+                    result += self.current_char
+                    self.advance()
+
+                if result == 'while':
+                    return Token('WHILE', 'while')
+
+                elif result == 'skip':
+                    return Token('SKIP', 'skip')
+
+                elif result == 'do':
+                    return Token('DO', 'do')
+
+                elif result == 'if':
+                    return Token('IF', 'if')
+
+                elif result == 'else':
+                    return Token('ELSE', 'else')
+
+                elif result == 'then':
+                    return Token('THEN', 'then')
+
+                elif result == 'true':
+                    return Token('BOOL', True)
+
+                elif result == 'false':
+                    return Token('BOOL', False)
+
+                else:
+                    return Token('VAR', result)
+
+            self.syntax_error()
+
+        return Token('EOF', None)
+
+class BinaryOperation:
+    def __init__(self, left, operand, right):
+        self.left = left
+        self.operand = operand
+        self.right = right
+
+
+class Int:
+    def __init__(self, token):
+        self.value = token.value
+        self.operand = token.type
+
+
+class Var:
+    def __init__(self, token):
+        self.value = token.value
+        self.operand = token.type
+
+
+class Array:
+    def __init__(self, token):
+        self.value = token.value
+        self.operand = token.type
+
+
+class Boolean:
+    def __init__(self, token):
+        self.value = token.value
+        self.operand = token.type
+
+
+class BoolOperation:
+    def __init__(self, left, operand, right):
+        self.left = left
+        self.operand = operand
+        self.right = right
+
+
+class Not:
+    def __init__(self, node):
+        self.operand = 'NOT'
+        self.nt = node
+
+
+class Skip:
+    def __init__(self, token):
+        self.value = token.value
+        self.operand = token.type
+
+
+class Assign:
+    def __init__(self, left, operand, right):
+        self.left = left
+        self.operand = operand
+        self.right = right
+
+
+class Semi:
+    def __init__(self, left, operand, right):
+        self.left = left
+        self.operand = operand
+        self.right = right
+
+
+class While:
+    def __init__(self, condition, while_true, while_false):
+        self.condition = condition
+        self.while_true = while_true
+        self.operand = 'WHILE'
+        self.while_false = while_false
+
+
+class If:
+    def __init__(self, condition, if_true, if_false):
+        self.condition = condition
+        self.if_true = if_true
+        self.operand = 'IF'
+        self.if_false = if_false
+
+
+class Parser:
+
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.state = lexer.state
+        self.current_token = self.lexer.get_next_token()
+
+    def syntax_error(self):
+        raise Exception('You have an error! ')
+
+    def factor(self):
+        token = self.current_token
+
+        if token.type == 'MINUS':
+            self.current_token = self.lexer.get_next_token()
+            token = self.current_token
+            token.value = -token.value
+            node = Int(token)
+
+        elif token.type == 'INTEGER':
+            node = Int(token)
+
+        elif token.type == 'VAR':
+            node = Var(token)
+
+        elif token.type == 'ARRAY':
+            node = Array(token)
+
+        elif token.type == 'NOT':
+            self.current_token = self.lexer.get_next_token()
+
+            if self.current_token.type == 'LEFT_PARENTHESIS':
+                self.current_token = self.lexer.get_next_token()
+                node = self.boolean_expression()
+
+            elif self.current_token.type == 'BOOL':
+                node = Boolean(self.current_token)
+
             else:
-                return 0 
-        
-        # TRUE condition
-        elif stmt_oper == "true_cond":
-            return 1
-        
-        # FALSE condition
-        elif stmt_oper == "false_cond":
+                self.syntax_error()
+            node = Not(node)
+
+        elif token.type == 'BOOL':
+            node = Boolean(token)
+
+        elif token.type == 'LEFT_PARENTHESIS':
+            self.current_token = self.lexer.get_next_token()
+            node = self.boolean_expression()
+
+        elif token.type == 'RIGHT_PARENTHESIS':
+            self.current_token = self.lexer.get_next_token()
+
+        elif token.type == 'LEFT_BRACES':
+            self.current_token = self.lexer.get_next_token()
+            node = self.statement_expression()
+
+        elif token.type == 'RIGHT_BRACES':
+            self.current_token = self.lexer.get_next_token()
+
+        elif token.type == 'SKIP':
+            node = Skip(token)
+
+        elif token.type == 'WHILE':
+            self.current_token = self.lexer.get_next_token()
+            condition = self.boolean_expression()
+            while_false = Skip(Token('SKIP', 'skip'))
+
+            if self.current_token.type == 'DO':
+                self.current_token = self.lexer.get_next_token()
+
+                if self.current_token == 'LEFT_BRACES':
+                    while_true = self.statement_expression()
+
+                else:
+                    while_true = self.statement_term()
+
+            return While(condition, while_true, while_false)
+
+        elif token.type == 'IF':
+            self.current_token = self.lexer.get_next_token()
+            condition = self.boolean_expression()
+
+            if self.current_token.type == "THEN":
+                self.current_token = self.lexer.get_next_token()
+                if_true = self.statement_expression()
+
+            if self.current_token.type == "ELSE":
+                self.current_token = self.lexer.get_next_token()
+                if_false = self.statement_expression()
+
+            return If(condition, if_true, if_false)
+
+        else:
+            self.syntax_error()
+        self.current_token = self.lexer.get_next_token()
+        return node
+
+    def arith_term(self):
+        node = self.factor()
+        while self.current_token.type == 'MUL':
+            type_name = self.current_token.type
+            self.current_token = self.lexer.get_next_token()
+            node = BinaryOperation(left=node, operand=type_name, right=self.factor())
+        return node
+
+    def arith_expression(self):
+        node = self.arith_term()
+        while self.current_token.type in ('PLUS', 'MINUS'):
+            type_name = self.current_token.type
+            self.current_token = self.lexer.get_next_token()
+            node = BinaryOperation(left=node, operand=type_name, right=self.arith_term())
+        return node
+
+    def arith_parse(self):
+        return self.arith_term()
+
+    def boolean_term(self):
+        node = self.arith_expression()
+        if self.current_token.type in ('EQUALS', 'SMALLER'):
+            type_name = self.current_token.type
+            self.current_token = self.lexer.get_next_token()
+            node = BinaryOperation(left=node, operand=type_name, right=self.arith_expression())
+        return node
+
+    def boolean_expression(self):
+        node = self.boolean_term()
+        while self.current_token.type in ('AND', 'OR'):
+            type_name = self.current_token.type
+            self.current_token = self.lexer.get_next_token()
+            node = BinaryOperation(left=node, operand=type_name, right=self.boolean_term())
+        return node
+
+    def boolean_parse(self):
+        return self.boolean_expression()
+
+    def statement_term(self):
+        node = self.boolean_expression()
+        if self.current_token.type == 'ASSIGN':
+            type_name = self.current_token.type
+            self.current_token = self.lexer.get_next_token()
+            node = Assign(left=node, operand=type_name, right=self.boolean_expression())
+        return node
+
+    def statement_expression(self):
+        node = self.statement_term()
+        while self.current_token.type == 'SEMI':
+            type_name = self.current_token.type
+            self.current_token = self.lexer.get_next_token()
+            node = Semi(left=node, operand=type_name, right=self.statement_term())
+        return node
+
+    def statement_parse(self):
+        return self.statement_expression()
+
+class Interpreter:
+    def __init__(self, parser):
+        self.state = parser.state
+        self.ast = parser.statement_parse()
+        self.variables = []
+        self.immediate_state = []
+
+    def visit(self):
+        return eval(self.ast, self.state, self.variables, self.immediate_state)
+
+
+def dictionary(var, value):
+    return dict([tuple([var, value])])
+
+
+def eval(ast, state, variables, immediate_state):
+
+    state = state
+    node = ast
+    variables = variables
+    immediate_state = immediate_state
+
+    if node.operand in ('INTEGER', 'ARRAY', 'BOOL'):
+        return node.value
+
+    elif node.operand == 'PLUS':
+        return eval(node.left, state, variables, immediate_state) + eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'MINUS':
+        return eval(node.left, state, variables, immediate_state) - eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'MUL':
+        return eval(node.left, state, variables, immediate_state) * eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'NOT':
+        return not eval(node.nt, state, variables, immediate_state)
+
+    elif node.operand == 'EQUALS':
+        return eval(node.left, state, variables, immediate_state) == eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'SMALLER':
+        return eval(node.left, state, variables, immediate_state) < eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'AND':
+        return eval(node.left, state, variables, immediate_state) and eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'OR':
+        return eval(node.left, state, variables, immediate_state) or eval(node.right, state, variables, immediate_state)
+
+    elif node.operand == 'VAR':
+        if node.value in state:
+            return state[node.value]
+        else:
             return 0
-        
-        # AND ^
-        elif stmt_oper == "and":
-            return self.interpret(tree.children[0]) and self.interpret(tree.children[1])
-        
-        # OR v
-        elif stmt_oper == "or":
-            return self.interpret(tree.children[0]) or self.interpret(tree.children[1])
-        
-        # get number
-        elif stmt_oper == "number":
-            return int(tree.children[0])
-        
-        # peek for variable
-        elif stmt_oper == "variable":
-            return self.checkVariable(tree.children[0])
-        
-        # Variable assignment
-        elif stmt_oper == "assigning":
-            variable = tree.children[0].children[0]
-            self.state[variable] = self.interpret(tree.children[1])
 
-            return
-        
-        # COMPARE left & right
-        elif stmt_oper == "compare":
-            coper = tree.children[1]
-            L = self.interpret(tree.children[0])
-            R = self.interpret(tree.children[2])
-            
-            return self.booleanCHECK(coper, L, R)
-        
-        # ARITH operations
-        elif stmt_oper in {"add", "sub", "mul", "div"}:
-            L = self.interpret(tree.children[0])
-            R = self.interpret(tree.children[1])
-            
-            if stmt_oper == 'add':
-                return L + R
-            
-            elif stmt_oper == 'mul':
-                return L * R
-            
-            elif stmt_oper == 'sub':
-                return L - R
-            
-            elif stmt_oper == 'div':
-                return round(L / R)
-        
-        # SKIP stmt: do nothing just return
-        elif stmt_oper == "skip":
-            return 
-        
-        # regular stmt
-        elif stmt_oper == "sstatement":
-            self.interpret(tree.children[0])
-            self.interpret(tree.children[1])
-            
-            return
-        
-        # IF stmt
-        elif stmt_oper == "if":
-            if self.interpret(tree.children[0]):
-                # condition satisfied & execute stmts
-                self.interpret(tree.children[1])
+    elif node.operand == 'SKIP':
+        state = state
+        temp_var = set(variables)
+        temp_state = copy.deepcopy(state)
+        temp_state = dict((var, temp_state[var]) for var in temp_var)
+        immediate_state.append(temp_state)
 
-            elif not self.interpret(tree.children[0]) and len(tree.children) == 3:
-                # condition unsatisfied & execute stmts after if-else stmt
-                self.interpret(tree.children[2])
-            
-            return 
-        
-        # TERNARY if
-        elif stmt_oper == "ternary":
-            var = tree.children[0].children[0]
-            condition = self.interpret(tree.children[1])
-            
-            self.state[var] = self.interpret(tree.children[2]) if condition else self.interpret(tree.children[3])
-            
-            return
-        
+    elif node.operand == 'SEMI':
+        eval(node.left, state, variables, immediate_state)
+        temp_var = set(variables)
+        temp_state = copy.deepcopy(state)
+        temp_state = dict((var, temp_state[var]) for var in temp_var)
+        immediate_state.append(temp_state)
+        eval(node.right, state, variables, immediate_state)
 
-        # WHILE statement
-        elif stmt_oper == "swhile":
-            if self.interpret(tree.children[0]):
-                # condition statisfied & execute statements
-                self.interpret(tree.children[1])
-                self.interpret(tree)
-            
-            elif not self.interpret(tree.children[0]) and tree.children[1].data == "sstatement":
-                self.interpret(tree.children[1].children[1])
+    elif node.operand == 'ASSIGN':
+        var = node.left.value
+        variables.append(var)
 
-            return
-        elif stmt_oper == "cwhile":
-            if self.interpret(tree.children[0]):
-                self.interpret(tree.children[1])
-                self.interpret(tree)
-            
-            return
-        
-        
+        if var in state:
+            state[var] = eval(node.right, state, variables, immediate_state)
 
-    def showStore(self):
-        itt = OrderedDict(sorted(self.state.items()))
-        store = ", ".join(str(variable) + " → " + str(data) for variable, data in itt.items())
-        
-        return "{" + store + "}"
+        else:
+            state.update(dictionary(var, eval(node.right, state, variables, immediate_state)))
+        temp_var = set(variables)
+        temp_state = copy.deepcopy(state)
+        temp_state = dict((var, temp_state[var]) for var in temp_var)
+        immediate_state.append(temp_state)
 
-    def read(self, input):
-        ast = self.parser.parse(input)
-        self.interpret(ast)
+    elif node.operand == 'WHILE':
+        condition = node.condition
+        while_true = node.while_true
 
-        return self.showStore()
-          
+        while eval(condition, state, variables, immediate_state):
+            temp_var = set(variables)
+            temp_state = copy.deepcopy(state)
+            temp_state = dict((var, temp_state[var]) for var in temp_var)
+            immediate_state.append(temp_state)
+            eval(while_true, state, variables, immediate_state)
+            temp_var = set(variables)
+            temp_state = copy.deepcopy(state)
+            temp_state = dict((var, temp_state[var]) for var in temp_var)
+            immediate_state.append(temp_state)
+        temp_var = set(variables)
+        temp_state = copy.deepcopy(state)
+        temp_state = dict((var, temp_state[var]) for var in temp_var)
+        immediate_state.append(temp_state)
+
+    elif node.operand == 'IF':
+        condition = node.condition
+        if_true = node.if_true
+        if_false = node.if_false
+
+        if eval(condition, state, variables, immediate_state):
+            temp_var = set(variables)
+            temp_state = copy.deepcopy(state)
+            temp_state = dict((var, temp_state[var]) for var in temp_var)
+            immediate_state.append(temp_state)
+            eval(if_true, state, variables, immediate_state)
+
+        else:
+            temp_var = set(variables)
+            temp_state = copy.deepcopy(state)
+            temp_state = dict((var, temp_state[var]) for var in temp_var)
+            immediate_state.append(temp_state)
+            eval(if_false, state, variables, immediate_state)
+
+    else:
+        raise Exception("Something went wrong")
+
+
+def to_print(node):
+    if node.operand in ('INTEGER', 'ARRAY', 'VAR', 'SKIP'):
+        return node.value
+    elif node.operand in 'BOOL':
+        return str(node.value).lower()
+    elif node.operand in ('PLUS', 'MINUS', 'MUL', 'EQUALS', 'SMALLER', 'AND', 'OR'):
+        return ''.join(['(', str(to_print(node.left)), node.operand, str(to_print(node.right)), ')'])
+    elif node.operand in 'NOT':
+        return ''.join([node.operand, str(to_print(node.nt))])
+    elif node.operand in 'ASSIGN':
+        return ' '.join([str(to_print(node.left)), node.operand, str(to_print(node.right))])
+    elif node.operand in 'SEMI':
+        return ' '.join([''.join([str(to_print(node.left)), node.operand]), str(to_print(node.right))])
+    elif node.operand in 'WHILE':
+        return ' '.join(['while', str(to_print(node.condition)), 'do', '{', str(to_print(node.while_true)), '}'])
+    elif node.operand in 'IF':
+        return ' '.join(['if', str(to_print(node.condition)), 'then', '{', str(to_print(node.if_true)), '}', 'else', '{', str(to_print(node.if_false)), '}'])
+    else:
+        raise Exception('You have a syntax error . . ')
+
+def main():
+    line = [input()]
+    text = ' '.join(line)
+    lexer = Tokenizer(text)
+    parser = Parser(lexer)
+    interpreter = Interpreter(parser)
+    interpreter.visit()
+    state_list = interpreter.immediate_state
+
+    if text == 'skip;':
+        del state_list
+    else:
+        for i in range(len(state_list)):
+            incomplete_output = []
+            for key in sorted(state_list[i]):
+                incomplete_output.append(' '.join([key, '→', str(state_list[i][key])]))
+        output = ''.join(['{', ', '.join(incomplete_output), '}'])
+    print(output)
+
+
 if __name__ == '__main__':
-    
-    for input in sys.stdin:
-        wp = Lark.open('while.lark', parser='lalr')
-        output = InterpAST(wp).read(input)
-        print(output)
+    main()
